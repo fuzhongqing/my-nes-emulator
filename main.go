@@ -1,7 +1,13 @@
 package main
 
-import "fmt"
+import (
+	"github.com/fuzhongqing/my-nes-emulator/bus"
+	"github.com/fuzhongqing/my-nes-emulator/cpu"
+)
 
 func main() {
-  fmt.Println("hello")
+	bus := &bus.Bus{}
+	cpu := &cpu.MOS6502{}
+
+	cpu.Connect(bus)
 }
