@@ -6,18 +6,50 @@ import "github.com/fuzhongqing/my-nes-emulator/bus"
 // instrction
 //--------------------------
 
+const (
+	AddrModeIMP = iota
+	AddrModeIMM = iota
+	AddrModeZP0 = iota
+	AddrModeZPX = iota
+	AddrModeZPY = iota
+	AddrModeREL = iota
+	AddrModeABS = iota
+	AddrModeABX = iota
+	AddrModeABY = iota
+	AddrModeIND = iota
+	AddrModeIZX = iota
+	AddrModeIZY = iota
+)
+
 type Instrction struct {
 	name     string
 	opereta  func(*MOS6502) int
-	addrmode func(*MOS6502) int
+	addrmode int
 	cycles   int
 }
 
 var instrctions map[uint8]*Instrction
+var addrModeFuncs map[int]func(*MOS6502) int
 
 func init() {
 	instrctions = map[uint8]*Instrction{
-		0x00: {"IMP", (*MOS6502).IMP, (*MOS6502).IMP, 0},
+		//  opc     name   func            addr         cycles
+		0x00: {"IMP", (*MOS6502).IMP, AddrModeIMP, 0},
+	}
+
+	addrModeFuncs = map[int]func(*MOS6502) int{
+		AddrModeIMP: (*MOS6502).IMP,
+		AddrModeIMM: (*MOS6502).IMM,
+		AddrModeZP0: (*MOS6502).ZP0,
+		AddrModeZPX: (*MOS6502).ZPX,
+		AddrModeZPY: (*MOS6502).ZPY,
+		AddrModeREL: (*MOS6502).REL,
+		AddrModeABS: (*MOS6502).ABS,
+		AddrModeABX: (*MOS6502).ABX,
+		AddrModeABY: (*MOS6502).ABY,
+		AddrModeIND: (*MOS6502).IND,
+		AddrModeIZX: (*MOS6502).IZX,
+		AddrModeIZY: (*MOS6502).IZY,
 	}
 }
 
@@ -44,8 +76,10 @@ type MOS6502 struct {
 	bus *bus.Bus
 
 	fetched    uint8
+	opcode     uint8
 	absAddr    uint16
 	relAddr    uint16
+	temp       uint16
 	cycles     int
 	clockCount int
 }
@@ -66,7 +100,7 @@ const (
 	FlagBreak            uint8 = 1 << iota
 	FlagUnused           uint8 = 1 << iota
 	FlagOverflow         uint8 = 1 << iota
-	FlagNagtive          uint8 = 1 << iota
+	FlagNegative         uint8 = 1 << iota
 )
 
 func (processor *MOS6502) GetFlag(flag uint8) uint8 {
@@ -94,6 +128,12 @@ func (p *MOS6502) ReloadProgramCounter(addr uint16) {
 	lo := p.Read(p.absAddr + 0)
 	hi := uint16(p.Read(p.absAddr + 1))
 	p.pc = (hi << 8) | uint16(lo)
+}
+
+func (p *MOS6502) Next() uint8 {
+	data := p.Read(p.pc)
+	p.pc++
+	return data
 }
 
 //--------------------------
@@ -129,6 +169,16 @@ func (processor *MOS6502) Read(address uint16) uint8 {
 
 func (processor *MOS6502) Write(address uint16, data uint8) {
 	processor.bus.WriteRAM(address, data)
+}
+
+func (processor *MOS6502) Fetch() uint8 {
+
+	if instrctions[processor.opcode].addrmode == AddrModeIMP {
+		return 0
+	}
+
+	processor.fetched = processor.Read(processor.absAddr)
+	return processor.fetched
 }
 
 //--------------------------
@@ -178,19 +228,21 @@ func (p *MOS6502) NMI() {
 
 func (p *MOS6502) Clock() {
 	if p.cycles == 0 {
-		opcode := p.Read(p.pc)
+		p.opcode = p.Read(p.pc)
 		p.pc++
 
-		instrction := instrctions[opcode]
+		instrction := instrctions[p.opcode]
 
 		p.SetFlag(FlagUnused, true)
 
-		addition_cycles_addr := instrction.addrmode(p)
-		addition_cycles_op   := instrction.opereta(p)
-		p.cycles = instrction.cycles + 
-      (addition_cycles_addr & addition_cycles_op)
+		addrModeFunc := addrModeFuncs[instrction.addrmode]
 
-    p.SetFlag(FlagUnused, true)
+		addition_cycles_addr := addrModeFunc(p)
+		addition_cycles_op := instrction.opereta(p)
+		p.cycles = instrction.cycles +
+			(addition_cycles_addr & addition_cycles_op)
+
+		p.SetFlag(FlagUnused, true)
 	}
 	p.cycles--
 	p.clockCount++
@@ -201,7 +253,134 @@ func (p *MOS6502) Clock() {
 //--------------------------
 
 func (processor *MOS6502) IMP() int {
-	// no op
+	processor.fetched = processor.acc
+	return 0
+}
+
+func (p *MOS6502) IMM() int {
+	p.absAddr = p.pc
+	p.pc++
+	return 0
+}
+
+func (p *MOS6502) ZP0() int {
+	p.absAddr = uint16(p.Next())
+	return 0
+}
+
+func (p *MOS6502) ZPX() int {
+	p.absAddr = uint16(p.Next() + p.x)
+	return 0
+}
+
+func (p *MOS6502) ZPY() int {
+	p.absAddr = uint16(p.Next() + p.y)
+	return 0
+}
+
+// why ?
+func (p *MOS6502) REL() int {
+	p.relAddr = uint16(p.Next())
+
+	/** why is that ? */
+	if (p.relAddr & 0x80) > 0 {
+		p.relAddr |= 0xFF00
+	}
+	return 0
+}
+
+func (p *MOS6502) ABS() int {
+	var lo uint16 = uint16(p.Next())
+	var hi uint16 = uint16(p.Next())
+	p.absAddr = (hi << 8) | lo
 
 	return 0
+}
+
+func (p *MOS6502) ABX() int {
+
+	var lo uint16 = uint16(p.Next())
+	var hi uint16 = uint16(p.Next())
+	p.absAddr = ((hi << 8) | lo) + uint16(p.x)
+
+	if (p.absAddr & 0xFF00) != (hi << 8) {
+		return 1
+	}
+
+	return 0
+}
+
+func (p *MOS6502) ABY() int {
+
+	var lo uint16 = uint16(p.Next())
+	var hi uint16 = uint16(p.Next())
+	p.absAddr = ((hi << 8) | lo) + uint16(p.y)
+
+	if (p.absAddr & 0xFF00) != (hi << 8) {
+		return 1
+	}
+
+	return 0
+}
+
+func (p *MOS6502) IND() int {
+	var lo uint16 = uint16(p.Next())
+	var hi uint16 = uint16(p.Next())
+	var ptr = hi<<8 | lo
+
+	// todo
+	if lo == 0xFF {
+		p.absAddr = (uint16(p.Read(ptr&0xFF00)) << 8) | uint16(p.Read(ptr))
+	} else {
+		p.absAddr = (uint16(p.Read(ptr+1)) << 8) | uint16(p.Read(ptr))
+	}
+
+	return 0
+}
+
+func (p *MOS6502) IZX() int {
+
+	var t uint16 = uint16(p.Next())
+
+	lo := uint16(p.Read((t + uint16(p.x)) & 0x00FF))
+	hi := uint16(p.Read((t + uint16(p.x) + 1) & 0x00FF))
+
+	p.absAddr = (hi << 8) | lo
+
+	return 0
+}
+
+func (p *MOS6502) IZY() int {
+
+	var t = uint16(p.Next())
+
+	lo := uint16(p.Read(t & 0x00FF))
+	hi := uint16(p.Read((t + 1) & 0x00FF))
+
+	addr_abs := (hi << 8) | lo
+	addr_abs += uint16(p.y)
+
+	p.absAddr = addr_abs
+
+	if (p.absAddr & 0xFF00) != (hi << 8) {
+		return 1
+	} else {
+		return 0
+	}
+}
+
+//--------------------------
+// instruction section
+//--------------------------
+
+func (p *MOS6502) ADC() int {
+	p.temp = uint16(p.fetched) + uint16(p.acc) + uint16(p.GetFlag(FlagCarry))
+	overflow := (^(uint16(p.acc) ^ uint16(p.fetched)) & (uint16(p.acc) ^ uint16(p.temp)) & 0x0080) > 0
+
+	p.SetFlag(FlagCarry, p.temp > 0xFF)
+	p.SetFlag(FlagZero, (p.temp&0xFF) == 0)
+	p.SetFlag(FlagOverflow, overflow)
+	p.SetFlag(FlagNegative, (p.temp&0x80) > 0)
+
+	return 1
 }
