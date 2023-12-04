@@ -391,8 +391,236 @@ func (p *MOS6502) IZY() int {
 	}
 }
 
-//--------------------------
+//=============================
 // instructions section
+//=============================
+
+//--------------------------
+// data trans
+//--------------------------
+
+func (p *MOS6502) LDA() int {
+	return 0
+}
+
+func (p *MOS6502) LDX() int {
+	return 0
+}
+
+func (p *MOS6502) LDY() int {
+	return 0
+}
+
+func (p *MOS6502) STA() int {
+	return 0
+}
+
+func (p *MOS6502) STX() int {
+	return 0
+}
+
+func (p *MOS6502) STY() int {
+	return 0
+}
+
+func (p *MOS6502) TAX() int {
+	return 0
+}
+
+func (p *MOS6502) TAY() int {
+	return 0
+}
+
+func (p *MOS6502) TSX() int {
+	return 0
+}
+
+func (p *MOS6502) TXA() int {
+	return 0
+}
+
+func (p *MOS6502) TXS() int {
+	return 0
+}
+
+func (p *MOS6502) TYA() int {
+	return 0
+}
+
+//--------------------------
+// arithmetic operations
+//--------------------------
+
+func (p *MOS6502) ADC() int {
+	return 0
+}
+
+func (p *MOS6502) SBC() int {
+	return 0
+}
+
+func (p *MOS6502) INC() int {
+	return 0
+}
+
+func (p *MOS6502) INX() int {
+	return 0
+}
+
+func (p *MOS6502) INY() int {
+	return 0
+}
+
+func (p *MOS6502) DEC() int {
+	return 0
+}
+
+func (p *MOS6502) DEX() int {
+	return 0
+}
+
+func (p *MOS6502) DEY() int {
+	return 0
+}
+
+//--------------------------
+// logic operations
+//--------------------------
+
+func (p *MOS6502) AND() int {
+	return 0
+}
+
+func (p *MOS6502) ORA() int {
+	return 0
+}
+
+func (p *MOS6502) EOR() int {
+	return 0
+}
+
+func (p *MOS6502) BIT() int {
+	return 0
+}
+
+//--------------------------
+// comparison
+//--------------------------
+
+func (p *MOS6502) CMP() int {
+	return 0
+}
+
+func (p *MOS6502) CPX() int {
+	return 0
+}
+
+func (p *MOS6502) CPY() int {
+	return 0
+}
+
+//--------------------------
+// bitwise
+//--------------------------
+
+func (p *MOS6502) ASL() int {
+	return 0
+}
+
+func (p *MOS6502) LSR() int {
+	return 0
+}
+
+func (p *MOS6502) ROL() int {
+	return 0
+}
+
+func (p *MOS6502) ROR() int {
+	return 0
+}
+
+//--------------------------
+// control
+//--------------------------
+
+func (p *MOS6502) JMP() int {
+	return 0
+}
+
+func (p *MOS6502) JSR() int {
+	return 0
+}
+
+func (p *MOS6502) RTS() int {
+	return 0
+}
+
+func (p *MOS6502) BCC() int {
+	return 0
+}
+
+func (p *MOS6502) BCS() int {
+	return 0
+}
+
+func (p *MOS6502) BEQ() int {
+	return 0
+}
+
+func (p *MOS6502) BMI() int {
+	return 0
+}
+
+func (p *MOS6502) BNE() int {
+	return 0
+}
+
+func (p *MOS6502) BPL() int {
+	return 0
+}
+
+func (p *MOS6502) BVC() int {
+	return 0
+}
+
+func (p *MOS6502) BVS() int {
+	return 0
+}
+
+//--------------------------
+// status
+//--------------------------
+
+func (p *MOS6502) CLC() int {
+	return 0
+}
+
+func (p *MOS6502) CLD() int {
+	return 0
+}
+
+func (p *MOS6502) CLI() int {
+	return 0
+}
+
+func (p *MOS6502) CLV() int {
+	return 0
+}
+
+func (p *MOS6502) SEC() int {
+	return 0
+}
+
+func (p *MOS6502) SED() int {
+	return 0
+}
+
+func (p *MOS6502) SEI() int {
+	return 0
+}
+
+//--------------------------
+// interrupt 
 //--------------------------
 
 func (p *MOS6502) BRK() int {
@@ -411,19 +639,33 @@ func (p *MOS6502) BRK() int {
 	return 0
 }
 
-// Instruction: Bitwise Logic OR
-// Function:    A = A | M
-// Flags Out:   N, Z
-func (p *MOS6502) ORA() int {
-	p.Fetch()
-
-	p.acc = p.acc | p.fetched
-
-	p.SetFlag(FlagZero, p.acc == 0x00)
-	p.SetFlag(FlagNegative, p.acc&0x80 > 0)
-
-	return 1
+func (p *MOS6502) RTI() int {
+	return 0
 }
+
+//--------------------------
+// stack
+//--------------------------
+
+func (p *MOS6502) PHA() int {
+	return 0
+}
+
+func (p *MOS6502) PHP() int {
+	return 0
+}
+
+func (p *MOS6502) PLA() int {
+	return 0
+}
+
+func (p *MOS6502) PLP() int {
+	return 0
+}
+
+//--------------------------
+// others
+//--------------------------
 
 func (p *MOS6502) XXX() int {
 	return 0
@@ -440,64 +682,5 @@ func (p *MOS6502) NOP() int {
 		return 1
 	}
 
-	return 0
-}
-
-func (p *MOS6502) ADC() int {
-	p.temp = uint16(p.fetched) + uint16(p.acc) + uint16(p.GetFlag(FlagCarry))
-	overflow := (^(uint16(p.acc) ^ uint16(p.fetched)) & (uint16(p.acc) ^ uint16(p.temp)) & 0x0080) > 0
-
-	p.SetFlag(FlagCarry, p.temp > 0xFF)
-	p.SetFlag(FlagZero, (p.temp&0xFF) == 0)
-	p.SetFlag(FlagOverflow, overflow)
-	p.SetFlag(FlagNegative, (p.temp&0x80) > 0)
-
-	return 1
-}
-
-func (p *MOS6502) BPL() int {
-	return 0
-}
-
-func (p *MOS6502) BMI() int {
-	return 0
-}
-
-func (p *MOS6502) JSR() int {
-	return 0
-}
-
-func (p *MOS6502) RTI() int {
-	return 0
-}
-func (p *MOS6502) BVC() int {
-	return 0
-}
-func (p *MOS6502) RTS() int {
-	return 0
-}
-func (p *MOS6502) BVS() int {
-	return 0
-}
-func (p *MOS6502) BCC() int {
-	return 0
-}
-func (p *MOS6502) LDY() int {
-	return 0
-}
-func (p *MOS6502) BCS() int {
-	return 0
-}
-func (p *MOS6502) CPY() int {
-	return 0
-}
-func (p *MOS6502) BNE() int {
-	return 0
-}
-func (p *MOS6502) CPX() int {
-	return 0
-}
-
-func (p *MOS6502) BEQ() int {
 	return 0
 }
