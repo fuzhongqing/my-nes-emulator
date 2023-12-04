@@ -197,7 +197,6 @@ func (processor *MOS6502) Fetch() uint8 {
 //--------------------------
 
 func (p *MOS6502) Reset() {
-
 	p.ReloadProgramCounter(PCAddrReset)
 
 	// Reset internal registers
@@ -320,7 +319,6 @@ func (p *MOS6502) ABS() int {
 }
 
 func (p *MOS6502) ABX() int {
-
 	var lo uint16 = uint16(p.Next())
 	var hi uint16 = uint16(p.Next())
 	p.absAddr = ((hi << 8) | lo) + uint16(p.x)
@@ -333,7 +331,6 @@ func (p *MOS6502) ABX() int {
 }
 
 func (p *MOS6502) ABY() int {
-
 	var lo uint16 = uint16(p.Next())
 	var hi uint16 = uint16(p.Next())
 	p.absAddr = ((hi << 8) | lo) + uint16(p.y)
@@ -361,7 +358,6 @@ func (p *MOS6502) IND() int {
 }
 
 func (p *MOS6502) IZX() int {
-
 	var t uint16 = uint16(p.Next())
 
 	lo := uint16(p.Read((t + uint16(p.x)) & 0x00FF))
@@ -620,7 +616,7 @@ func (p *MOS6502) SEI() int {
 }
 
 //--------------------------
-// interrupt 
+// interrupt
 //--------------------------
 
 func (p *MOS6502) BRK() int {
