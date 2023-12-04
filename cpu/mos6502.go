@@ -28,13 +28,27 @@ type Instrction struct {
 	cycles   int
 }
 
-var instrctions map[uint8]*Instrction
+var instrctions []*Instrction
 var addrModeFuncs map[int]func(*MOS6502) int
 
 func init() {
-	instrctions = map[uint8]*Instrction{
-		//  opc     name   func            addr         cycles
-		0x00: {"IMP", (*MOS6502).IMP, AddrModeIMP, 0},
+	instrctions = []*Instrction{
+		{"BRK", (*MOS6502).BRK, AddrModeIMM, 7}, {"ORA", (*MOS6502).ORA, AddrModeIZX, 6}, {"???", (*MOS6502).XXX, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 8}, {"???", (*MOS6502).NOP, AddrModeIMP, 3}, {"ORA", (*MOS6502).ORA, AddrModeZP0, 3}, {"ASL", (*MOS6502).ASL, AddrModeZP0, 5}, {"???", (*MOS6502).XXX, AddrModeIMP, 5}, {"PHP", (*MOS6502).PHP, AddrModeIMP, 3}, {"ORA", (*MOS6502).ORA, AddrModeIMM, 2}, {"ASL", (*MOS6502).ASL, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 2}, {"???", (*MOS6502).NOP, AddrModeIMP, 4}, {"ORA", (*MOS6502).ORA, AddrModeABS, 4}, {"ASL", (*MOS6502).ASL, AddrModeABS, 6}, {"???", (*MOS6502).XXX, AddrModeIMP, 6},
+		{"BPL", (*MOS6502).BPL, AddrModeREL, 2}, {"ORA", (*MOS6502).ORA, AddrModeIZY, 5}, {"???", (*MOS6502).XXX, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 8}, {"???", (*MOS6502).NOP, AddrModeIMP, 4}, {"ORA", (*MOS6502).ORA, AddrModeZPX, 4}, {"ASL", (*MOS6502).ASL, AddrModeZPX, 6}, {"???", (*MOS6502).XXX, AddrModeIMP, 6}, {"CLC", (*MOS6502).CLC, AddrModeIMP, 2}, {"ORA", (*MOS6502).ORA, AddrModeABY, 4}, {"???", (*MOS6502).NOP, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 7}, {"???", (*MOS6502).NOP, AddrModeIMP, 4}, {"ORA", (*MOS6502).ORA, AddrModeABX, 4}, {"ASL", (*MOS6502).ASL, AddrModeABX, 7}, {"???", (*MOS6502).XXX, AddrModeIMP, 7},
+		{"JSR", (*MOS6502).JSR, AddrModeABS, 6}, {"AND", (*MOS6502).AND, AddrModeIZX, 6}, {"???", (*MOS6502).XXX, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 8}, {"BIT", (*MOS6502).BIT, AddrModeZP0, 3}, {"AND", (*MOS6502).AND, AddrModeZP0, 3}, {"ROL", (*MOS6502).ROL, AddrModeZP0, 5}, {"???", (*MOS6502).XXX, AddrModeIMP, 5}, {"PLP", (*MOS6502).PLP, AddrModeIMP, 4}, {"AND", (*MOS6502).AND, AddrModeIMM, 2}, {"ROL", (*MOS6502).ROL, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 2}, {"BIT", (*MOS6502).BIT, AddrModeABS, 4}, {"AND", (*MOS6502).AND, AddrModeABS, 4}, {"ROL", (*MOS6502).ROL, AddrModeABS, 6}, {"???", (*MOS6502).XXX, AddrModeIMP, 6},
+		{"BMI", (*MOS6502).BMI, AddrModeREL, 2}, {"AND", (*MOS6502).AND, AddrModeIZY, 5}, {"???", (*MOS6502).XXX, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 8}, {"???", (*MOS6502).NOP, AddrModeIMP, 4}, {"AND", (*MOS6502).AND, AddrModeZPX, 4}, {"ROL", (*MOS6502).ROL, AddrModeZPX, 6}, {"???", (*MOS6502).XXX, AddrModeIMP, 6}, {"SEC", (*MOS6502).SEC, AddrModeIMP, 2}, {"AND", (*MOS6502).AND, AddrModeABY, 4}, {"???", (*MOS6502).NOP, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 7}, {"???", (*MOS6502).NOP, AddrModeIMP, 4}, {"AND", (*MOS6502).AND, AddrModeABX, 4}, {"ROL", (*MOS6502).ROL, AddrModeABX, 7}, {"???", (*MOS6502).XXX, AddrModeIMP, 7},
+		{"RTI", (*MOS6502).RTI, AddrModeIMP, 6}, {"EOR", (*MOS6502).EOR, AddrModeIZX, 6}, {"???", (*MOS6502).XXX, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 8}, {"???", (*MOS6502).NOP, AddrModeIMP, 3}, {"EOR", (*MOS6502).EOR, AddrModeZP0, 3}, {"LSR", (*MOS6502).LSR, AddrModeZP0, 5}, {"???", (*MOS6502).XXX, AddrModeIMP, 5}, {"PHA", (*MOS6502).PHA, AddrModeIMP, 3}, {"EOR", (*MOS6502).EOR, AddrModeIMM, 2}, {"LSR", (*MOS6502).LSR, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 2}, {"JMP", (*MOS6502).JMP, AddrModeABS, 3}, {"EOR", (*MOS6502).EOR, AddrModeABS, 4}, {"LSR", (*MOS6502).LSR, AddrModeABS, 6}, {"???", (*MOS6502).XXX, AddrModeIMP, 6},
+		{"BVC", (*MOS6502).BVC, AddrModeREL, 2}, {"EOR", (*MOS6502).EOR, AddrModeIZY, 5}, {"???", (*MOS6502).XXX, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 8}, {"???", (*MOS6502).NOP, AddrModeIMP, 4}, {"EOR", (*MOS6502).EOR, AddrModeZPX, 4}, {"LSR", (*MOS6502).LSR, AddrModeZPX, 6}, {"???", (*MOS6502).XXX, AddrModeIMP, 6}, {"CLI", (*MOS6502).CLI, AddrModeIMP, 2}, {"EOR", (*MOS6502).EOR, AddrModeABY, 4}, {"???", (*MOS6502).NOP, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 7}, {"???", (*MOS6502).NOP, AddrModeIMP, 4}, {"EOR", (*MOS6502).EOR, AddrModeABX, 4}, {"LSR", (*MOS6502).LSR, AddrModeABX, 7}, {"???", (*MOS6502).XXX, AddrModeIMP, 7},
+		{"RTS", (*MOS6502).RTS, AddrModeIMP, 6}, {"ADC", (*MOS6502).ADC, AddrModeIZX, 6}, {"???", (*MOS6502).XXX, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 8}, {"???", (*MOS6502).NOP, AddrModeIMP, 3}, {"ADC", (*MOS6502).ADC, AddrModeZP0, 3}, {"ROR", (*MOS6502).ROR, AddrModeZP0, 5}, {"???", (*MOS6502).XXX, AddrModeIMP, 5}, {"PLA", (*MOS6502).PLA, AddrModeIMP, 4}, {"ADC", (*MOS6502).ADC, AddrModeIMM, 2}, {"ROR", (*MOS6502).ROR, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 2}, {"JMP", (*MOS6502).JMP, AddrModeIND, 5}, {"ADC", (*MOS6502).ADC, AddrModeABS, 4}, {"ROR", (*MOS6502).ROR, AddrModeABS, 6}, {"???", (*MOS6502).XXX, AddrModeIMP, 6},
+		{"BVS", (*MOS6502).BVS, AddrModeREL, 2}, {"ADC", (*MOS6502).ADC, AddrModeIZY, 5}, {"???", (*MOS6502).XXX, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 8}, {"???", (*MOS6502).NOP, AddrModeIMP, 4}, {"ADC", (*MOS6502).ADC, AddrModeZPX, 4}, {"ROR", (*MOS6502).ROR, AddrModeZPX, 6}, {"???", (*MOS6502).XXX, AddrModeIMP, 6}, {"SEI", (*MOS6502).SEI, AddrModeIMP, 2}, {"ADC", (*MOS6502).ADC, AddrModeABY, 4}, {"???", (*MOS6502).NOP, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 7}, {"???", (*MOS6502).NOP, AddrModeIMP, 4}, {"ADC", (*MOS6502).ADC, AddrModeABX, 4}, {"ROR", (*MOS6502).ROR, AddrModeABX, 7}, {"???", (*MOS6502).XXX, AddrModeIMP, 7},
+		{"???", (*MOS6502).NOP, AddrModeIMP, 2}, {"STA", (*MOS6502).STA, AddrModeIZX, 6}, {"???", (*MOS6502).NOP, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 6}, {"STY", (*MOS6502).STY, AddrModeZP0, 3}, {"STA", (*MOS6502).STA, AddrModeZP0, 3}, {"STX", (*MOS6502).STX, AddrModeZP0, 3}, {"???", (*MOS6502).XXX, AddrModeIMP, 3}, {"DEY", (*MOS6502).DEY, AddrModeIMP, 2}, {"???", (*MOS6502).NOP, AddrModeIMP, 2}, {"TXA", (*MOS6502).TXA, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 2}, {"STY", (*MOS6502).STY, AddrModeABS, 4}, {"STA", (*MOS6502).STA, AddrModeABS, 4}, {"STX", (*MOS6502).STX, AddrModeABS, 4}, {"???", (*MOS6502).XXX, AddrModeIMP, 4},
+		{"BCC", (*MOS6502).BCC, AddrModeREL, 2}, {"STA", (*MOS6502).STA, AddrModeIZY, 6}, {"???", (*MOS6502).XXX, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 6}, {"STY", (*MOS6502).STY, AddrModeZPX, 4}, {"STA", (*MOS6502).STA, AddrModeZPX, 4}, {"STX", (*MOS6502).STX, AddrModeZPY, 4}, {"???", (*MOS6502).XXX, AddrModeIMP, 4}, {"TYA", (*MOS6502).TYA, AddrModeIMP, 2}, {"STA", (*MOS6502).STA, AddrModeABY, 5}, {"TXS", (*MOS6502).TXS, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 5}, {"???", (*MOS6502).NOP, AddrModeIMP, 5}, {"STA", (*MOS6502).STA, AddrModeABX, 5}, {"???", (*MOS6502).XXX, AddrModeIMP, 5}, {"???", (*MOS6502).XXX, AddrModeIMP, 5},
+		{"LDY", (*MOS6502).LDY, AddrModeIMM, 2}, {"LDA", (*MOS6502).LDA, AddrModeIZX, 6}, {"LDX", (*MOS6502).LDX, AddrModeIMM, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 6}, {"LDY", (*MOS6502).LDY, AddrModeZP0, 3}, {"LDA", (*MOS6502).LDA, AddrModeZP0, 3}, {"LDX", (*MOS6502).LDX, AddrModeZP0, 3}, {"???", (*MOS6502).XXX, AddrModeIMP, 3}, {"TAY", (*MOS6502).TAY, AddrModeIMP, 2}, {"LDA", (*MOS6502).LDA, AddrModeIMM, 2}, {"TAX", (*MOS6502).TAX, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 2}, {"LDY", (*MOS6502).LDY, AddrModeABS, 4}, {"LDA", (*MOS6502).LDA, AddrModeABS, 4}, {"LDX", (*MOS6502).LDX, AddrModeABS, 4}, {"???", (*MOS6502).XXX, AddrModeIMP, 4},
+		{"BCS", (*MOS6502).BCS, AddrModeREL, 2}, {"LDA", (*MOS6502).LDA, AddrModeIZY, 5}, {"???", (*MOS6502).XXX, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 5}, {"LDY", (*MOS6502).LDY, AddrModeZPX, 4}, {"LDA", (*MOS6502).LDA, AddrModeZPX, 4}, {"LDX", (*MOS6502).LDX, AddrModeZPY, 4}, {"???", (*MOS6502).XXX, AddrModeIMP, 4}, {"CLV", (*MOS6502).CLV, AddrModeIMP, 2}, {"LDA", (*MOS6502).LDA, AddrModeABY, 4}, {"TSX", (*MOS6502).TSX, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 4}, {"LDY", (*MOS6502).LDY, AddrModeABX, 4}, {"LDA", (*MOS6502).LDA, AddrModeABX, 4}, {"LDX", (*MOS6502).LDX, AddrModeABY, 4}, {"???", (*MOS6502).XXX, AddrModeIMP, 4},
+		{"CPY", (*MOS6502).CPY, AddrModeIMM, 2}, {"CMP", (*MOS6502).CMP, AddrModeIZX, 6}, {"???", (*MOS6502).NOP, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 8}, {"CPY", (*MOS6502).CPY, AddrModeZP0, 3}, {"CMP", (*MOS6502).CMP, AddrModeZP0, 3}, {"DEC", (*MOS6502).DEC, AddrModeZP0, 5}, {"???", (*MOS6502).XXX, AddrModeIMP, 5}, {"INY", (*MOS6502).INY, AddrModeIMP, 2}, {"CMP", (*MOS6502).CMP, AddrModeIMM, 2}, {"DEX", (*MOS6502).DEX, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 2}, {"CPY", (*MOS6502).CPY, AddrModeABS, 4}, {"CMP", (*MOS6502).CMP, AddrModeABS, 4}, {"DEC", (*MOS6502).DEC, AddrModeABS, 6}, {"???", (*MOS6502).XXX, AddrModeIMP, 6},
+		{"BNE", (*MOS6502).BNE, AddrModeREL, 2}, {"CMP", (*MOS6502).CMP, AddrModeIZY, 5}, {"???", (*MOS6502).XXX, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 8}, {"???", (*MOS6502).NOP, AddrModeIMP, 4}, {"CMP", (*MOS6502).CMP, AddrModeZPX, 4}, {"DEC", (*MOS6502).DEC, AddrModeZPX, 6}, {"???", (*MOS6502).XXX, AddrModeIMP, 6}, {"CLD", (*MOS6502).CLD, AddrModeIMP, 2}, {"CMP", (*MOS6502).CMP, AddrModeABY, 4}, {"NOP", (*MOS6502).NOP, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 7}, {"???", (*MOS6502).NOP, AddrModeIMP, 4}, {"CMP", (*MOS6502).CMP, AddrModeABX, 4}, {"DEC", (*MOS6502).DEC, AddrModeABX, 7}, {"???", (*MOS6502).XXX, AddrModeIMP, 7},
+		{"CPX", (*MOS6502).CPX, AddrModeIMM, 2}, {"SBC", (*MOS6502).SBC, AddrModeIZX, 6}, {"???", (*MOS6502).NOP, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 8}, {"CPX", (*MOS6502).CPX, AddrModeZP0, 3}, {"SBC", (*MOS6502).SBC, AddrModeZP0, 3}, {"INC", (*MOS6502).INC, AddrModeZP0, 5}, {"???", (*MOS6502).XXX, AddrModeIMP, 5}, {"INX", (*MOS6502).INX, AddrModeIMP, 2}, {"SBC", (*MOS6502).SBC, AddrModeIMM, 2}, {"NOP", (*MOS6502).NOP, AddrModeIMP, 2}, {"???", (*MOS6502).SBC, AddrModeIMP, 2}, {"CPX", (*MOS6502).CPX, AddrModeABS, 4}, {"SBC", (*MOS6502).SBC, AddrModeABS, 4}, {"INC", (*MOS6502).INC, AddrModeABS, 6}, {"???", (*MOS6502).XXX, AddrModeIMP, 6},
+		{"BEQ", (*MOS6502).BEQ, AddrModeREL, 2}, {"SBC", (*MOS6502).SBC, AddrModeIZY, 5}, {"???", (*MOS6502).XXX, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 8}, {"???", (*MOS6502).NOP, AddrModeIMP, 4}, {"SBC", (*MOS6502).SBC, AddrModeZPX, 4}, {"INC", (*MOS6502).INC, AddrModeZPX, 6}, {"???", (*MOS6502).XXX, AddrModeIMP, 6}, {"SED", (*MOS6502).SED, AddrModeIMP, 2}, {"SBC", (*MOS6502).SBC, AddrModeABY, 4}, {"NOP", (*MOS6502).NOP, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 7}, {"???", (*MOS6502).NOP, AddrModeIMP, 4}, {"SBC", (*MOS6502).SBC, AddrModeABX, 4}, {"INC", (*MOS6502).INC, AddrModeABX, 7}, {"???", (*MOS6502).XXX, AddrModeIMP, 7},
 	}
 
 	addrModeFuncs = map[int]func(*MOS6502) int{
@@ -62,6 +76,7 @@ const (
 	StackInitAddrRel uint8  = 0xFD
 	PCAddrReset      uint16 = 0xFFFC
 	PCAddrIRQ        uint16 = 0xFFFE
+	PCAddrBRK        uint16 = 0xFFFE
 	PCAddrNMI        uint16 = 0xFFFA
 )
 
@@ -151,10 +166,6 @@ func (p *MOS6502) PushProgramCounter() {
 }
 
 func (p *MOS6502) PushStateRegister() {
-	p.SetFlag(FlagBreak, false)
-	p.SetFlag(FlagUnused, true)
-	p.SetFlag(FlagDisableInterrupt, true)
-
 	p.Write(StackAddrAbs+uint16(p.stackPtr), p.status)
 	p.stackPtr--
 }
@@ -212,15 +223,26 @@ func (p *MOS6502) IRQ() {
 	}
 
 	p.PushProgramCounter()
+
+	p.SetFlag(FlagBreak, false)
+	p.SetFlag(FlagUnused, true)
+	p.SetFlag(FlagDisableInterrupt, true)
 	p.PushStateRegister()
+
 	p.ReloadProgramCounter(PCAddrIRQ)
 
 	p.cycles = 7
 }
 
 func (p *MOS6502) NMI() {
+
 	p.PushProgramCounter()
+
+	p.SetFlag(FlagBreak, false)
+	p.SetFlag(FlagUnused, true)
+	p.SetFlag(FlagDisableInterrupt, true)
 	p.PushStateRegister()
+
 	p.ReloadProgramCounter(PCAddrNMI)
 
 	p.cycles = 8
@@ -370,8 +392,56 @@ func (p *MOS6502) IZY() int {
 }
 
 //--------------------------
-// instruction section
+// instructions section
 //--------------------------
+
+func (p *MOS6502) BRK() int {
+	p.pc++
+
+	p.SetFlag(FlagDisableInterrupt, true)
+
+	p.PushProgramCounter()
+
+	p.SetFlag(FlagBreak, true)
+	p.PushStateRegister()
+	p.SetFlag(FlagBreak, false)
+
+	p.ReloadProgramCounter(PCAddrBRK)
+
+	return 0
+}
+
+// Instruction: Bitwise Logic OR
+// Function:    A = A | M
+// Flags Out:   N, Z
+func (p *MOS6502) ORA() int {
+	p.Fetch()
+
+	p.acc = p.acc | p.fetched
+
+	p.SetFlag(FlagZero, p.acc == 0x00)
+	p.SetFlag(FlagNegative, p.acc&0x80 > 0)
+
+	return 1
+}
+
+func (p *MOS6502) XXX() int {
+	return 0
+}
+
+func (p *MOS6502) NOP() int {
+	switch p.opcode {
+	case 0x1C:
+	case 0x3C:
+	case 0x5C:
+	case 0x7C:
+	case 0xDC:
+	case 0xFC:
+		return 1
+	}
+
+	return 0
+}
 
 func (p *MOS6502) ADC() int {
 	p.temp = uint16(p.fetched) + uint16(p.acc) + uint16(p.GetFlag(FlagCarry))
@@ -383,4 +453,51 @@ func (p *MOS6502) ADC() int {
 	p.SetFlag(FlagNegative, (p.temp&0x80) > 0)
 
 	return 1
+}
+
+func (p *MOS6502) BPL() int {
+	return 0
+}
+
+func (p *MOS6502) BMI() int {
+	return 0
+}
+
+func (p *MOS6502) JSR() int {
+	return 0
+}
+
+func (p *MOS6502) RTI() int {
+	return 0
+}
+func (p *MOS6502) BVC() int {
+	return 0
+}
+func (p *MOS6502) RTS() int {
+	return 0
+}
+func (p *MOS6502) BVS() int {
+	return 0
+}
+func (p *MOS6502) BCC() int {
+	return 0
+}
+func (p *MOS6502) LDY() int {
+	return 0
+}
+func (p *MOS6502) BCS() int {
+	return 0
+}
+func (p *MOS6502) CPY() int {
+	return 0
+}
+func (p *MOS6502) BNE() int {
+	return 0
+}
+func (p *MOS6502) CPX() int {
+	return 0
+}
+
+func (p *MOS6502) BEQ() int {
+	return 0
 }
