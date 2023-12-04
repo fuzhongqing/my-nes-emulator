@@ -395,51 +395,99 @@ func (p *MOS6502) IZY() int {
 // data trans
 //--------------------------
 
+// load the accumulator
 func (p *MOS6502) LDA() int {
-	return 0
+	p.Fetch()
+	p.acc = p.fetched
+
+	p.SetFlag(FlagZero, p.fetched == 0x00)
+	p.SetFlag(FlagNegative, p.fetched & 0x80 > 0)
+
+	return 1
 }
 
 func (p *MOS6502) LDX() int {
-	return 0
+	p.Fetch()
+	p.x = p.fetched
+
+	p.SetFlag(FlagZero, p.fetched == 0x00)
+	p.SetFlag(FlagNegative, p.fetched & 0x80 > 0)
+
+	return 1
 }
 
 func (p *MOS6502) LDY() int {
-	return 0
+	p.Fetch()
+	p.y = p.fetched
+
+	p.SetFlag(FlagZero, p.fetched == 0x00)
+	p.SetFlag(FlagNegative, p.fetched & 0x80 > 0)
+
+	return 1
 }
 
 func (p *MOS6502) STA() int {
+	p.Write(p.absAddr, p.acc)
 	return 0
 }
 
 func (p *MOS6502) STX() int {
+	p.Write(p.absAddr, p.x)
 	return 0
 }
 
 func (p *MOS6502) STY() int {
+	p.Write(p.absAddr, p.y)
 	return 0
 }
 
 func (p *MOS6502) TAX() int {
+	p.x = p.acc
+
+	p.SetFlag(FlagZero, p.x == 0x00)
+	p.SetFlag(FlagNegative, p.x & 0x80 > 0)
+
 	return 0
 }
 
 func (p *MOS6502) TAY() int {
+	p.y = p.acc
+
+	p.SetFlag(FlagZero, p.y == 0x00)
+	p.SetFlag(FlagNegative, p.y & 0x80 > 0)
+
 	return 0
 }
 
 func (p *MOS6502) TSX() int {
+	p.x = p.stackPtr
+
+	p.SetFlag(FlagZero, p.x == 0x00)
+	p.SetFlag(FlagNegative, p.x & 0x80 > 0)
+
 	return 0
 }
 
 func (p *MOS6502) TXA() int {
+	p.acc = p.x
+
+	p.SetFlag(FlagZero, p.acc == 0x00)
+	p.SetFlag(FlagNegative, p.acc & 0x80 > 0)
+
 	return 0
 }
 
 func (p *MOS6502) TXS() int {
+	p.stackPtr = p.x
 	return 0
 }
 
 func (p *MOS6502) TYA() int {
+	p.acc = p.y
+
+	p.SetFlag(FlagZero, p.acc == 0x00)
+	p.SetFlag(FlagNegative, p.acc & 0x80 > 0)
+
 	return 0
 }
 
@@ -540,10 +588,16 @@ func (p *MOS6502) ROR() int {
 //--------------------------
 
 func (p *MOS6502) JMP() int {
+	p.pc = p.absAddr
 	return 0
 }
 
 func (p *MOS6502) JSR() int {
+	p.pc--
+	p.PushProgramCounter()
+
+
+
 	return 0
 }
 
