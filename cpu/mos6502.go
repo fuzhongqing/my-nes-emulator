@@ -1,3 +1,7 @@
+// mos 6502 cpu
+// 
+// https://www.nesdev.org/obelisk-6502-guide/architecture.html
+
 package cpu
 
 import "github.com/fuzhongqing/my-nes-emulator/bus"
@@ -32,6 +36,7 @@ var instrctions []*Instrction
 var addrModeFuncs map[int]func(*MOS6502) int
 
 func init() {
+        // https://github.com/OneLoneCoder/olcNES/blob/ac5ce64cdb3a390a89d550c5f130682b37eeb080/Part%232%20-%20CPU/olc6502.cpp#L92
 	instrctions = []*Instrction{
 		{"BRK", (*MOS6502).BRK, AddrModeIMM, 7}, {"ORA", (*MOS6502).ORA, AddrModeIZX, 6}, {"???", (*MOS6502).XXX, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 8}, {"???", (*MOS6502).NOP, AddrModeIMP, 3}, {"ORA", (*MOS6502).ORA, AddrModeZP0, 3}, {"ASL", (*MOS6502).ASL, AddrModeZP0, 5}, {"???", (*MOS6502).XXX, AddrModeIMP, 5}, {"PHP", (*MOS6502).PHP, AddrModeIMP, 3}, {"ORA", (*MOS6502).ORA, AddrModeIMM, 2}, {"ASL", (*MOS6502).ASL, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 2}, {"???", (*MOS6502).NOP, AddrModeIMP, 4}, {"ORA", (*MOS6502).ORA, AddrModeABS, 4}, {"ASL", (*MOS6502).ASL, AddrModeABS, 6}, {"???", (*MOS6502).XXX, AddrModeIMP, 6},
 		{"BPL", (*MOS6502).BPL, AddrModeREL, 2}, {"ORA", (*MOS6502).ORA, AddrModeIZY, 5}, {"???", (*MOS6502).XXX, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 8}, {"???", (*MOS6502).NOP, AddrModeIMP, 4}, {"ORA", (*MOS6502).ORA, AddrModeZPX, 4}, {"ASL", (*MOS6502).ASL, AddrModeZPX, 6}, {"???", (*MOS6502).XXX, AddrModeIMP, 6}, {"CLC", (*MOS6502).CLC, AddrModeIMP, 2}, {"ORA", (*MOS6502).ORA, AddrModeABY, 4}, {"???", (*MOS6502).NOP, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 7}, {"???", (*MOS6502).NOP, AddrModeIMP, 4}, {"ORA", (*MOS6502).ORA, AddrModeABX, 4}, {"ASL", (*MOS6502).ASL, AddrModeABX, 7}, {"???", (*MOS6502).XXX, AddrModeIMP, 7},
