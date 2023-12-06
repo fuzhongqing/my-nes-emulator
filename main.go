@@ -8,6 +8,9 @@ import (
 func main() {
 	bus := &bus.Bus{}
 	cpu := &cpu.MOS6502{}
-
 	cpu.Connect(bus)
+
+	cpu.Reset()
+
+	cpu.Dump()
 }
