@@ -45,6 +45,12 @@ func (cpu *MOS6502) Dump() {
 	fmt.Printf("y:\t%v\t0x%04x\n", cpu.y, cpu.y)
 	fmt.Printf("pc:\t%v\t0x%04x\n", cpu.pc, cpu.pc)
 
+	fmt.Printf("opcode:\t%v\t0x%04x\n", cpu.opcode, cpu.opcode)
+	if cpu.instrction != nil {
+		fmt.Printf("opname:\t%v\n", cpu.instrction.name)
+	}
+	fmt.Printf("data:\t%v\t0x%04x\n", cpu.fetched, cpu.fetched)
+
 	// stack
 	fmt.Println()
 

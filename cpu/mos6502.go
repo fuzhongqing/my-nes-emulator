@@ -1,5 +1,5 @@
 // mos 6502 cpu
-// 
+//
 // https://www.nesdev.org/obelisk-6502-guide/architecture.html
 
 package cpu
@@ -36,7 +36,7 @@ var instrctions []*Instrction
 var addrModeFuncs map[int]func(*MOS6502) int
 
 func init() {
-        // https://github.com/OneLoneCoder/olcNES/blob/ac5ce64cdb3a390a89d550c5f130682b37eeb080/Part%232%20-%20CPU/olc6502.cpp#L92
+	// https://github.com/OneLoneCoder/olcNES/blob/ac5ce64cdb3a390a89d550c5f130682b37eeb080/Part%232%20-%20CPU/olc6502.cpp#L92
 	instrctions = []*Instrction{
 		{"BRK", (*MOS6502).BRK, AddrModeIMM, 7}, {"ORA", (*MOS6502).ORA, AddrModeIZX, 6}, {"???", (*MOS6502).XXX, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 8}, {"???", (*MOS6502).NOP, AddrModeIMP, 3}, {"ORA", (*MOS6502).ORA, AddrModeZP0, 3}, {"ASL", (*MOS6502).ASL, AddrModeZP0, 5}, {"???", (*MOS6502).XXX, AddrModeIMP, 5}, {"PHP", (*MOS6502).PHP, AddrModeIMP, 3}, {"ORA", (*MOS6502).ORA, AddrModeIMM, 2}, {"ASL", (*MOS6502).ASL, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 2}, {"???", (*MOS6502).NOP, AddrModeIMP, 4}, {"ORA", (*MOS6502).ORA, AddrModeABS, 4}, {"ASL", (*MOS6502).ASL, AddrModeABS, 6}, {"???", (*MOS6502).XXX, AddrModeIMP, 6},
 		{"BPL", (*MOS6502).BPL, AddrModeREL, 2}, {"ORA", (*MOS6502).ORA, AddrModeIZY, 5}, {"???", (*MOS6502).XXX, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 8}, {"???", (*MOS6502).NOP, AddrModeIMP, 4}, {"ORA", (*MOS6502).ORA, AddrModeZPX, 4}, {"ASL", (*MOS6502).ASL, AddrModeZPX, 6}, {"???", (*MOS6502).XXX, AddrModeIMP, 6}, {"CLC", (*MOS6502).CLC, AddrModeIMP, 2}, {"ORA", (*MOS6502).ORA, AddrModeABY, 4}, {"???", (*MOS6502).NOP, AddrModeIMP, 2}, {"???", (*MOS6502).XXX, AddrModeIMP, 7}, {"???", (*MOS6502).NOP, AddrModeIMP, 4}, {"ORA", (*MOS6502).ORA, AddrModeABX, 4}, {"ASL", (*MOS6502).ASL, AddrModeABX, 7}, {"???", (*MOS6502).XXX, AddrModeIMP, 7},
@@ -95,6 +95,7 @@ type MOS6502 struct {
 
 	bus *bus.Bus
 
+	instrction *Instrction
 	fetched    uint8
 	opcode     uint8
 	absAddr    uint16
@@ -106,6 +107,10 @@ type MOS6502 struct {
 
 func (processor *MOS6502) Connect(bus *bus.Bus) {
 	processor.bus = bus
+}
+
+func (processor *MOS6502) Complete() bool {
+	return processor.cycles == 0
 }
 
 //--------------------------
@@ -182,21 +187,21 @@ func (p *MOS6502) PushAccRegister() {
 
 func (p *MOS6502) PopProgramCounter() {
 	p.stackPtr++
-	lo := uint16(p.Read(StackAddrAbs+uint16(p.stackPtr)))
+	lo := uint16(p.Read(StackAddrAbs + uint16(p.stackPtr)))
 	p.stackPtr++
-	hi := uint16(p.Read(StackAddrAbs+uint16(p.stackPtr)))
+	hi := uint16(p.Read(StackAddrAbs + uint16(p.stackPtr)))
 
-	p.pc = hi << 8 + lo
+	p.pc = hi<<8 + lo
 }
 
 func (p *MOS6502) PopStateRegister() {
 	p.stackPtr++
-	p.status = p.Read(StackAddrAbs+uint16(p.stackPtr))
+	p.status = p.Read(StackAddrAbs + uint16(p.stackPtr))
 }
 
 func (p *MOS6502) PopAccRegister() {
 	p.stackPtr++
-	p.acc = p.Read(StackAddrAbs+uint16(p.stackPtr))
+	p.acc = p.Read(StackAddrAbs + uint16(p.stackPtr))
 }
 
 //--------------------------
@@ -282,6 +287,7 @@ func (p *MOS6502) Clock() {
 		p.pc++
 
 		instrction := instrctions[p.opcode]
+		p.instrction = instrction
 
 		p.SetFlag(FlagUnused, true)
 
@@ -430,7 +436,7 @@ func (p *MOS6502) LDA() int {
 	p.acc = p.fetched
 
 	p.SetFlag(FlagZero, p.fetched == 0x00)
-	p.SetFlag(FlagNegative, p.fetched & 0x80 > 0)
+	p.SetFlag(FlagNegative, p.fetched&0x80 > 0)
 
 	return 1
 }
@@ -440,7 +446,7 @@ func (p *MOS6502) LDX() int {
 	p.x = p.fetched
 
 	p.SetFlag(FlagZero, p.fetched == 0x00)
-	p.SetFlag(FlagNegative, p.fetched & 0x80 > 0)
+	p.SetFlag(FlagNegative, p.fetched&0x80 > 0)
 
 	return 1
 }
@@ -450,7 +456,7 @@ func (p *MOS6502) LDY() int {
 	p.y = p.fetched
 
 	p.SetFlag(FlagZero, p.fetched == 0x00)
-	p.SetFlag(FlagNegative, p.fetched & 0x80 > 0)
+	p.SetFlag(FlagNegative, p.fetched&0x80 > 0)
 
 	return 1
 }
@@ -474,7 +480,7 @@ func (p *MOS6502) TAX() int {
 	p.x = p.acc
 
 	p.SetFlag(FlagZero, p.x == 0x00)
-	p.SetFlag(FlagNegative, p.x & 0x80 > 0)
+	p.SetFlag(FlagNegative, p.x&0x80 > 0)
 
 	return 0
 }
@@ -483,7 +489,7 @@ func (p *MOS6502) TAY() int {
 	p.y = p.acc
 
 	p.SetFlag(FlagZero, p.y == 0x00)
-	p.SetFlag(FlagNegative, p.y & 0x80 > 0)
+	p.SetFlag(FlagNegative, p.y&0x80 > 0)
 
 	return 0
 }
@@ -492,7 +498,7 @@ func (p *MOS6502) TSX() int {
 	p.x = p.stackPtr
 
 	p.SetFlag(FlagZero, p.x == 0x00)
-	p.SetFlag(FlagNegative, p.x & 0x80 > 0)
+	p.SetFlag(FlagNegative, p.x&0x80 > 0)
 
 	return 0
 }
@@ -501,7 +507,7 @@ func (p *MOS6502) TXA() int {
 	p.acc = p.x
 
 	p.SetFlag(FlagZero, p.acc == 0x00)
-	p.SetFlag(FlagNegative, p.acc & 0x80 > 0)
+	p.SetFlag(FlagNegative, p.acc&0x80 > 0)
 
 	return 0
 }
@@ -515,7 +521,7 @@ func (p *MOS6502) TYA() int {
 	p.acc = p.y
 
 	p.SetFlag(FlagZero, p.acc == 0x00)
-	p.SetFlag(FlagNegative, p.acc & 0x80 > 0)
+	p.SetFlag(FlagNegative, p.acc&0x80 > 0)
 
 	return 0
 }
@@ -532,7 +538,7 @@ func (p *MOS6502) ADC() int {
 	p.SetFlag(FlagCarry, p.temp&0xFF00 > 0)
 	p.SetFlag(FlagZero, p.temp&0x00FF == 0)
 	p.SetFlag(FlagOverflow, ^(uint16(p.acc)^uint16(p.fetched))&(uint16(p.acc)^uint16(p.temp))&0x0080 > 0)
-	p.SetFlag(FlagNegative, p.temp & 0x0080 > 0)
+	p.SetFlag(FlagNegative, p.temp&0x0080 > 0)
 
 	p.acc = uint8(p.temp)
 
@@ -549,7 +555,7 @@ func (p *MOS6502) SBC() int {
 	p.SetFlag(FlagCarry, p.temp&0xFF00 > 0)
 	p.SetFlag(FlagZero, p.temp&0x00FF == 0)
 	p.SetFlag(FlagOverflow, (p.temp^reverse)&(uint16(p.acc)^uint16(p.temp))&0x0080 > 0)
-	p.SetFlag(FlagNegative, p.temp & 0x0080 > 0)
+	p.SetFlag(FlagNegative, p.temp&0x0080 > 0)
 
 	p.acc = uint8(p.temp)
 
@@ -561,7 +567,7 @@ func (p *MOS6502) INC() int {
 	p.temp = uint16(p.fetched) + 1
 	p.Write(p.absAddr, uint8(p.temp))
 	p.SetFlag(FlagZero, uint8(p.temp) == 0)
-	p.SetFlag(FlagNegative, p.temp & 0x80 > 0)
+	p.SetFlag(FlagNegative, p.temp&0x80 > 0)
 
 	return 0
 }
@@ -569,14 +575,14 @@ func (p *MOS6502) INC() int {
 func (p *MOS6502) INX() int {
 	p.x++
 	p.SetFlag(FlagZero, p.x == 0)
-	p.SetFlag(FlagNegative, p.x& 0x80 > 0)
+	p.SetFlag(FlagNegative, p.x&0x80 > 0)
 	return 0
 }
 
 func (p *MOS6502) INY() int {
 	p.y++
 	p.SetFlag(FlagZero, p.y == 0)
-	p.SetFlag(FlagNegative, p.y& 0x80 > 0)
+	p.SetFlag(FlagNegative, p.y&0x80 > 0)
 	return 0
 }
 
@@ -585,21 +591,21 @@ func (p *MOS6502) DEC() int {
 	p.temp = uint16(p.fetched) - 1
 	p.Write(p.absAddr, uint8(p.temp))
 	p.SetFlag(FlagZero, uint8(p.temp) == 0)
-	p.SetFlag(FlagNegative, p.temp & 0x80 > 0)
+	p.SetFlag(FlagNegative, p.temp&0x80 > 0)
 	return 0
 }
 
 func (p *MOS6502) DEX() int {
 	p.x--
 	p.SetFlag(FlagZero, p.x == 0)
-	p.SetFlag(FlagNegative, p.x& 0x80 > 0)
+	p.SetFlag(FlagNegative, p.x&0x80 > 0)
 	return 0
 }
 
 func (p *MOS6502) DEY() int {
 	p.y--
 	p.SetFlag(FlagZero, p.y == 0)
-	p.SetFlag(FlagNegative, p.y& 0x80 > 0)
+	p.SetFlag(FlagNegative, p.y&0x80 > 0)
 	return 0
 }
 
@@ -635,8 +641,8 @@ func (p *MOS6502) BIT() int {
 	p.Fetch()
 	p.acc = p.acc & p.fetched
 	p.SetFlag(FlagZero, p.acc == 0x00)
-	p.SetFlag(FlagNegative, (p.fetched & 1<<7) > 0)
-	p.SetFlag(FlagOverflow, (p.fetched & 1<<6) > 0)
+	p.SetFlag(FlagNegative, (p.fetched&1<<7) > 0)
+	p.SetFlag(FlagOverflow, (p.fetched&1<<6) > 0)
 	return 1
 }
 
@@ -682,7 +688,7 @@ func (p *MOS6502) CPY() int {
 func (p *MOS6502) ASL() int {
 	p.Fetch()
 	p.temp = uint16(p.fetched) << 1
-	
+
 	p.SetFlag(FlagCarry, p.temp&0xFF00 > 0)
 	p.SetFlag(FlagZero, p.temp&0x00FF > 0x00)
 	p.SetFlag(FlagNegative, p.temp&0x80 > 0)
@@ -690,7 +696,7 @@ func (p *MOS6502) ASL() int {
 	if instrctions[p.opcode].addrmode == AddrModeIMP {
 		p.acc = uint8(p.temp & 0x00FF)
 	} else {
-		p.Write(p.absAddr, uint8(p.temp & 0x00FF))
+		p.Write(p.absAddr, uint8(p.temp&0x00FF))
 	}
 
 	return 0
@@ -706,7 +712,7 @@ func (p *MOS6502) LSR() int {
 	if instrctions[p.opcode].addrmode == AddrModeIMP {
 		p.acc = uint8(p.temp & 0x00FF)
 	} else {
-		p.Write(p.absAddr, uint8(p.temp & 0x00FF))
+		p.Write(p.absAddr, uint8(p.temp&0x00FF))
 	}
 	return 0
 }
@@ -714,7 +720,7 @@ func (p *MOS6502) LSR() int {
 func (p *MOS6502) ROL() int {
 	p.Fetch()
 	p.temp = uint16(p.fetched)<<1 | uint16(p.GetFlag(FlagCarry))
-	
+
 	p.SetFlag(FlagCarry, p.temp&0xFF00 > 0)
 	p.SetFlag(FlagZero, p.temp&0x00FF > 0x00)
 	p.SetFlag(FlagNegative, p.temp&0x80 > 0)
@@ -722,7 +728,7 @@ func (p *MOS6502) ROL() int {
 	if instrctions[p.opcode].addrmode == AddrModeIMP {
 		p.acc = uint8(p.temp & 0x00FF)
 	} else {
-		p.Write(p.absAddr, uint8(p.temp & 0x00FF))
+		p.Write(p.absAddr, uint8(p.temp&0x00FF))
 	}
 	return 0
 }
@@ -730,7 +736,7 @@ func (p *MOS6502) ROL() int {
 func (p *MOS6502) ROR() int {
 	p.Fetch()
 	p.temp = uint16(p.fetched)>>1 | uint16(p.GetFlag(FlagCarry))<<7
-	
+
 	p.SetFlag(FlagCarry, p.fetched&0x01 > 0)
 	p.SetFlag(FlagZero, p.temp&0x00FF > 0x00)
 	p.SetFlag(FlagNegative, p.temp&0x80 > 0)
@@ -738,7 +744,7 @@ func (p *MOS6502) ROR() int {
 	if instrctions[p.opcode].addrmode == AddrModeIMP {
 		p.acc = uint8(p.temp & 0x00FF)
 	} else {
-		p.Write(p.absAddr, uint8(p.temp & 0x00FF))
+		p.Write(p.absAddr, uint8(p.temp&0x00FF))
 	}
 	return 0
 }
@@ -962,7 +968,7 @@ func (p *MOS6502) PHP() int {
 func (p *MOS6502) PLA() int {
 	p.PopAccRegister()
 	p.SetFlag(FlagZero, p.acc == 0x00)
-	p.SetFlag(FlagNegative, p.acc & 0x80 > 0)
+	p.SetFlag(FlagNegative, p.acc&0x80 > 0)
 
 	return 0
 }
