@@ -120,12 +120,12 @@ func (processor *MOS6502) Complete() bool {
 const (
 	FlagCarry            uint8 = 1 << iota
 	FlagZero             uint8 = 1 << iota
-	FlagDisableInterrupt uint8 = 1 << iota
+	FlagInterruptDisable uint8 = 1 << iota
 	FlagDecimal          uint8 = 1 << iota
 	FlagBreak            uint8 = 1 << iota
-	FlagUnused           uint8 = 1 << iota
 	FlagOverflow         uint8 = 1 << iota
 	FlagNegative         uint8 = 1 << iota
+	FlagUnused           uint8 = 1 << iota
 )
 
 func (processor *MOS6502) GetFlag(flag uint8) uint8 {
@@ -249,7 +249,7 @@ func (p *MOS6502) Reset() {
 }
 
 func (p *MOS6502) IRQ() {
-	isDisableInterrupt := p.GetFlag(FlagDisableInterrupt) > 0
+	isDisableInterrupt := p.GetFlag(FlagInterruptDisable) > 0
 
 	if isDisableInterrupt {
 		return
@@ -259,7 +259,7 @@ func (p *MOS6502) IRQ() {
 
 	p.SetFlag(FlagBreak, false)
 	p.SetFlag(FlagUnused, true)
-	p.SetFlag(FlagDisableInterrupt, true)
+	p.SetFlag(FlagInterruptDisable, true)
 	p.PushStateRegister()
 
 	p.ReloadProgramCounter(PCAddrIRQ)
@@ -273,7 +273,7 @@ func (p *MOS6502) NMI() {
 
 	p.SetFlag(FlagBreak, false)
 	p.SetFlag(FlagUnused, true)
-	p.SetFlag(FlagDisableInterrupt, true)
+	p.SetFlag(FlagInterruptDisable, true)
 	p.PushStateRegister()
 
 	p.ReloadProgramCounter(PCAddrNMI)
@@ -890,7 +890,7 @@ func (p *MOS6502) CLD() int {
 }
 
 func (p *MOS6502) CLI() int {
-	p.SetFlag(FlagDisableInterrupt, false)
+	p.SetFlag(FlagInterruptDisable, false)
 	return 0
 }
 
@@ -910,7 +910,7 @@ func (p *MOS6502) SED() int {
 }
 
 func (p *MOS6502) SEI() int {
-	p.SetFlag(FlagDisableInterrupt, true)
+	p.SetFlag(FlagInterruptDisable, true)
 	return 0
 }
 
@@ -921,7 +921,7 @@ func (p *MOS6502) SEI() int {
 func (p *MOS6502) BRK() int {
 	p.pc++
 
-	p.SetFlag(FlagDisableInterrupt, true)
+	p.SetFlag(FlagInterruptDisable, true)
 
 	p.PushProgramCounter()
 
